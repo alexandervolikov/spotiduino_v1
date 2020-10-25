@@ -550,7 +550,7 @@ void writeInit() {
     }
   }
 
-  byte dataBlock[4] = {dataBuffer[2],dataBuffer[3], 0, 0};
+  byte dataBlock[4] = {dataBuffer[2],dataBuffer[3], 5, 105};
   if(!ntagWrite(dataBlock, pageInit)) {
      return;
   }
