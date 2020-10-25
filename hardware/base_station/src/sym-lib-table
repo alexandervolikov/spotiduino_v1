@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name sportiduino-base-rescue)(type Legacy)(uri ${KIPRJMOD}/sportiduino-base-rescue.lib)(options "")(descr ""))
+)

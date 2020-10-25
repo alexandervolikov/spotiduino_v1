@@ -1,0 +1,24 @@
+Comment,Designator, Footprint,LCSC Part #（optional）
+100 nF,C1,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C10,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+4.7 uF,C2,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C1779 
+4.7 uF,C3,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C1779 
+100 nF,C4,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C5,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C6,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C7,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C8,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+100 nF,C9,Capacitor_SMD:C_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C235732 
+MCP1700-3302E,D1,Package_TO_SOT_SMD:SOT-23_Handsoldering,C39051 
+ATmega328P-AU,D2,Package_QFP:TQFP-32_7x7mm_P0.8mm,C14877 
+DS3231SN,D3,Sportiduino:SOIC-16W_7.5x10.3mm_P1.27mm,C9866 
+24LC256T-I/SN,D4,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,C5458 
+10 KΩ,R1,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C115295 
+68 KΩ,R10,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C212421
+100 Ω,R2,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C25277 
+10 KΩ,R3,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C115295 
+3.3 KΩ,R4,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C153139 
+33 KΩ,R5,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C212381 
+33 KΩ,R6,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C212381
+270 KΩ,R9,Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder,C212457 
+BSS 138,VT1,Package_TO_SOT_SMD:SOT-23_Handsoldering,C78284 
