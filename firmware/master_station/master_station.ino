@@ -13,8 +13,10 @@ const byte RST_PIN = 9;
 const byte SS_PIN = 10;
 
 //password for master key
-uint8_t pass[] = {0,0,0,0};
+uint8_t pass[] = {0,0,0};
+uint8_t pass_ntag[] = {0,0,0,0};
 const uint16_t eepromPass = 850;
+const uint16_t EEPROM_ADR_NTAG_PWD = 950;
 
 const uint8_t ntagValue = 130;
 
@@ -57,9 +59,13 @@ void setup() {
   pass[0] = eepromread(eepromPass);
   pass[1] = eepromread(eepromPass+3);
   pass[2] = eepromread(eepromPass+6);
-  pass[3] = eepromread(eepromPass+9);
 
-  if (((pass[0]==0) and (pass[1]==0) and (pass[2]==0)) or ((pass[0]==255) and (pass[1]==255) and (pass[2]==255)) or (pass[3]==0)){
+  pass_ntag[0] = eepromread(EEPROM_ADR_NTAG_PWD);
+  pass_ntag[1] = eepromread(EEPROM_ADR_NTAG_PWD+3);
+  pass_ntag[2] = eepromread(EEPROM_ADR_NTAG_PWD+6);
+  pass_ntag[3] = eepromread(EEPROM_ADR_NTAG_PWD+9);
+
+  if ((pass_ntag[0]==0) and (pass_ntag[1]==0) and (pass_ntag[2]==0) and (pass_ntag[3]==0)){
     chip_protect = false;
   }
   else{
@@ -153,7 +159,7 @@ void sendData(uint8_t func, uint8_t leng){
  */
 bool chipPwd(){
    
-   uint8_t dataBlock2[4] = {pass[0], pass[1], pass[2], pass[3]};
+   uint8_t dataBlock2[4] = {pass_ntag[0], pass_ntag[1], pass_ntag[2], pass_ntag[3]};
     // пароль 4 байта, мы будем использовать первые три - мастер пароли и последний nfc-пароль
    const uint8_t sizePageNtag = 4;
    status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pagePwd, dataBlock2, sizePageNtag);
@@ -221,7 +227,7 @@ void chipAuth(bool auth){
 
 bool ntagAuth (){
   
-  uint8_t password[4]= {pass[0], pass[1], pass[2], pass[3]};
+  uint8_t password[4]= {pass_ntag[0], pass_ntag[1], pass_ntag[2], pass_ntag[3]};
   uint8_t pack[2] = {0,0};
   
   status = (MFRC522::StatusCode) mfrc522.PCD_NTAG216_AUTH(password, pack); 
@@ -375,6 +381,9 @@ void findFunc() {
     case 0x52:
       write_clean_master();
       break;
+    case 0x53:
+      ntag_pwd_master();
+      break;
     case 0x58:
       signalError(0);
       break;
@@ -493,21 +502,66 @@ void writeMasterPass() {
   pass[0] = dataBuffer[2];
   pass[1] = dataBuffer[3];
   pass[2] = dataBuffer[4];
-  pass[3] = dataBuffer[8];  
   
   eepromwrite(eepromPass, dataBuffer[2]);
   eepromwrite(eepromPass+3, dataBuffer[3]);
   eepromwrite(eepromPass+6, dataBuffer[4]);
-  eepromwrite(eepromPass+9, dataBuffer[8]);
+  
+  byte dataBlock3[] = {pass[0],pass[1],pass[2]};
+  if(!ntagWrite(dataBlock3, pageInfo1)) {
+    return;
+  }
 
-  if (((pass[0]==0) and (pass[1]==0) and (pass[2]==0)) or ((pass[0]==255) and (pass[1]==255) and (pass[2]==255)) or (pass[3]==0)){
+  signalOK();
+
+  SPI.end();
+}
+
+/*
+ * 
+ */
+void ntag_pwd_master() {
+  SPI.begin();      // Init SPI bus
+  mfrc522.PCD_Init(); 
+  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
+  // Look for new cards
+  if ( ! mfrc522.PICC_IsNewCardPresent()) {
+    return;
+  }
+  // Select one of the cards
+  if ( ! mfrc522.PICC_ReadCardSerial()) {
+    return;
+  }
+
+  byte dataBlock[4] = {0,246,255, 0};
+  if(!ntagWrite(dataBlock, pageInit)) {
+    return;
+  }
+
+
+  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
+  if(!ntagWrite(dataBlock2, pagePass)) {
+    return;
+  }
+
+  pass_ntag[0] = dataBuffer[2];
+  pass_ntag[1] = dataBuffer[3];
+  pass_ntag[2] = dataBuffer[4];
+  pass_ntag[3] = dataBuffer[5];  
+  
+  eepromwrite(EEPROM_ADR_NTAG_PWD, dataBuffer[2]);
+  eepromwrite(EEPROM_ADR_NTAG_PWD+3, dataBuffer[3]);
+  eepromwrite(EEPROM_ADR_NTAG_PWD+6, dataBuffer[4]);
+  eepromwrite(EEPROM_ADR_NTAG_PWD+9, dataBuffer[5]);
+
+  if ((pass_ntag[0]==0) and (pass_ntag[1]==0) and (pass_ntag[2]==0) and (pass_ntag[3]==0)){
     chip_protect = false;
   }
   else{
     chip_protect = true;
   }
   
-  byte dataBlock3[] = {pass[0],pass[1],pass[2],pass[3]};
+  byte dataBlock3[] = {pass_ntag[0],pass_ntag[1],pass_ntag[2],pass_ntag[3]};
   if(!ntagWrite(dataBlock3, pageInfo1)) {
     return;
   }

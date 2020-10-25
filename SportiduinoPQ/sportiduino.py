@@ -66,6 +66,7 @@ class Sportiduino(object):
     CMD_INIT_STATECARD    = b'\x50'
     CMD_INIT_FULL_LOG_CARD= b'\x51'
     CMD_INIT_CLEAN_CARD   = b'\x52'
+    CMD_INIT_NTAGPWD      = b'\x53'
     CMD_BEEP_OK           = b'\x59'
 
     # Protocol responses
@@ -280,17 +281,29 @@ class Sportiduino(object):
         self._send_command(Sportiduino.CMD_INIT_TIMECARD, params, wait_response=False)
 
 
-    def init_passwd_card(self, old_passwd=0, new_passwd=0, nfc_passwd=0):
+    def init_passwd_card(self, old_passwd=0, new_passwd=0):
         """Initialize card for writing new password to base station.
         @param old_passwd: Old password (default 0x000000).
         @param new_passwd: New password (default 0x000000).
-        @param nfc_passwd: Pass for nfc write protection (default 0x00).
         """
         params = b''
         params += Sportiduino._to_str(new_passwd, 3)
         params += Sportiduino._to_str(old_passwd, 3)
-        params += Sportiduino._to_str(nfc_passwd, 1)
         self._send_command(Sportiduino.CMD_INIT_PASSWDCARD, params, wait_response=False)
+
+    def init_ntag_passwd_card(self, pwd1=0, pwd2=0, pwd3=0, pwd4=0):
+        """Initialize card for writing new ntag password to base station.
+        @param pwd1: new password 1 (default 0x00).
+        @param pwd2: new password 2 (default 0x00).
+        @param pwd3: new password 3 (default 0x00).
+        @param pwd4: new password 4 (default 0x00).
+        """
+        params = b''
+        params += Sportiduino._to_str(pwd1, 1)
+        params += Sportiduino._to_str(pwd2, 1)
+        params += Sportiduino._to_str(pwd3, 1)
+        params += Sportiduino._to_str(pwd4, 1)
+        self._send_command(Sportiduino.CMD_INIT_NTAGPWD, params, wait_response=False)
 
     def init_full_log_card(self, start_chip=0):
         """Initialize card for writing full log

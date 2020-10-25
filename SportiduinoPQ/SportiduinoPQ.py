@@ -32,7 +32,10 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.new_pass1.setText('0')
         self.new_pass2.setText('0')
         self.new_pass3.setText('0')
-        self.nfc_pass.setText('0')
+        self.ntagPass1.setText('0')
+        self.ntagPass2.setText('0')
+        self.ntagPass3.setText('0')
+        self.ntagPass4.setText('0')
         self.printerName.setText(QPrinter().printerName())
         
         self.initTime = datetime.now()
@@ -55,6 +58,7 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.SleepCard.clicked.connect(self.SleepCard_clicked)
         self.statusCard.clicked.connect(self.statusCard_clicked)
         self.cleanCard.clicked.connect(self.cleanCard_clicked)
+        self.NtagPassCard.clicked.connect(self.NtagPassCard_clicked)
         self.PassCard.clicked.connect(self.PassCard_clicked)
         self.SaveSet.clicked.connect(self.SaveSet_clicked)
         self.LoadSet.clicked.connect(self.LoadSet_clicked)
@@ -354,19 +358,9 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.addText('\nmaster station is not connected')
             return
         
-        nfc_pwd = 0
         old_pwd = [0, 0, 0]
         new_pwd = [0, 0, 0]
 
-        if (self.nfc_pass.text().isdigit()):
-            nfc_pwd = int(self.nfc_pass.text())
-            if nfc_pwd < 0 or nfc_pwd > 255:
-                self.addText('\nnot correct old pass value')
-                nfc_pwd = -1
-        else:
-            self.addText('\nnot correct old pass value')
-            nfc_pwd = -1
-        
         if (self.old_pass1.text().isdigit()):
             old_pwd[0] = int(self.old_pass1.text())
             if (old_pwd[0] <0 or old_pwd[0] > 255):
@@ -424,9 +418,59 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         oldPass = old_pwd[0]*256*256 + old_pwd[1]*256 + old_pwd[2]
         newPass = new_pwd[0]*256*256 + new_pwd[1]*256 + new_pwd[2]
         
-        if -1 not in new_pwd and -1 not in old_pwd and nfc_pwd != -1:
+        if -1 not in new_pwd and -1 not in old_pwd:
             try:
-                self.sportiduino.init_passwd_card(oldPass, newPass, nfc_pwd)
+                self.sportiduino.init_passwd_card(oldPass, newPass)
+                self.addText ('\nset password - settings card')
+            except:
+                self.addText('\nError')
+
+    def NtagPassCard_clicked(self):
+        if (self.connected == False):
+            self.addText('\nmaster station is not connected')
+            return
+        
+        pwd = [0, 0, 0, 0]
+
+        if (self.ntagPass1.text().isdigit()):
+            pwd[0] = int(self.ntagPass1.text())
+            if (pwd[0] <0 or pwd[0] > 255):
+                self.addText('\nnot correct old pass value')
+                pwd[0] = -1
+        else:
+            self.addText('\nnot correct old pass value')
+            pwd[0] = -1
+
+        if (self.ntagPass2.text().isdigit()):
+            pwd[1] = int(self.ntagPass2.text())
+            if (pwd[1] <0 or pwd[1] > 255):
+                self.addText('\nnot correct old pass value')
+                pwd[1] = -1
+        else:
+            self.addText('\nnot correct old pass value')
+            pwd[1] = -1
+        
+        if (self.ntagPass3.text().isdigit()):
+            pwd[2] = int(self.ntagPass3.text())
+            if (pwd[2] <0 or pwd[2] > 255):
+                self.addText('\nnot correct old pass value')
+                pwd[2] = -1
+        else:
+            self.addText('\nnot correct old pass value')
+            pwd[2] = -1
+        
+        if (self.ntagPass4.text().isdigit()):
+            pwd[3] = int(self.ntagPass4.text())
+            if (pwd[3] <0 or pwd[3] > 255):
+                self.addText('\nnot correct old pass value')
+                pwd[3] = -1
+        else:
+            self.addText('\nnot correct old pass value')
+            pwd[3] = -1
+
+        if -1 not in pwd:
+            try:
+                self.sportiduino.init_ntag_passwd_card(pwd[0], pwd[1], pwd[2], pwd[3])
                 self.addText ('\nset password - settings card')
             except:
                 self.addText('\nError')
@@ -435,7 +479,10 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         
         try:
             sets = open(os.path.join('data','settings.txt'))
-            self.nfc_pass.setText(sets.readline().rstrip())
+            self.ntagPass1.setText(sets.readline().rstrip())
+            self.ntagPass2.setText(sets.readline().rstrip())
+            self.ntagPass3.setText(sets.readline().rstrip())
+            self.ntagPass4.setText(sets.readline().rstrip())
             self.new_pass1.setText(sets.readline().rstrip())
             self.new_pass2.setText(sets.readline().rstrip())
             self.new_pass3.setText(sets.readline().rstrip())
@@ -449,7 +496,10 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def SaveSet_clicked(self):
                 
         sets = open(os.path.join('data','settings.txt'),'w')
-        sets.write(self.nfc_pass.text()+'\n')
+        sets.write(self.ntagPass1.text()+'\n')
+        sets.write(self.ntagPass2.text()+'\n')
+        sets.write(self.ntagPass3.text()+'\n')
+        sets.write(self.ntagPass4.text()+'\n')
         sets.write(self.new_pass1.text()+'\n')
         sets.write(self.new_pass2.text()+'\n')
         sets.write(self.new_pass3.text()+'\n')
