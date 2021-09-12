@@ -1,6 +1,6 @@
 ﻿# sportiduinoPQ
 
-### версия 0.6.2
+### версия 0.6.3
 
 ```commandline
 pip install pyserial pyqt5 xmltodict six sip

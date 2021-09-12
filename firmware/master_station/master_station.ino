@@ -2,7 +2,7 @@
 #include <MFRC522.h>
 #include <EEPROM.h>
 
-const uint8_t vers = 150;
+const uint8_t vers = 152;
 
 //antena gain. Max = 0x07 << 4, min = 0. Set it manualy
 const uint8_t gain = 0x06 << 4;
@@ -14,9 +14,7 @@ const byte SS_PIN = 10;
 
 //password for master key
 uint8_t pass[] = {0,0,0};
-uint8_t pass_ntag[] = {0,0,0,0};
 const uint16_t eepromPass = 850;
-const uint16_t EEPROM_ADR_NTAG_PWD = 950;
 
 const uint8_t ntagValue = 130;
 
@@ -24,11 +22,6 @@ const byte pageInit = 4;
 const byte pagePass = 5;
 const byte pageInfo1 = 6;
 const byte pageInfo2 = 7;
-
-const byte pageAuth = 131;
-const byte pageAccess = 132;
-const byte pagePwd = 133;
-const byte pagePack = 134;
 
 const uint8_t START_BYTE = 0xfe;
 
@@ -39,7 +32,6 @@ enum Error {
   ERROR_EEPROM_READ = 0x04
 };
 
-uint8_t chip_protect = false;
 uint8_t function = 0;
 
 const uint8_t timeOut = 10;
@@ -59,18 +51,7 @@ void setup() {
   pass[0] = eepromread(eepromPass);
   pass[1] = eepromread(eepromPass+3);
   pass[2] = eepromread(eepromPass+6);
-
-  pass_ntag[0] = eepromread(EEPROM_ADR_NTAG_PWD);
-  pass_ntag[1] = eepromread(EEPROM_ADR_NTAG_PWD+3);
-  pass_ntag[2] = eepromread(EEPROM_ADR_NTAG_PWD+6);
-  pass_ntag[3] = eepromread(EEPROM_ADR_NTAG_PWD+9);
-
-  if ((pass_ntag[0]==0) and (pass_ntag[1]==0) and (pass_ntag[2]==0) and (pass_ntag[3]==0)){
-    chip_protect = false;
-  }
-  else{
-    chip_protect = true;
-  }
+  
 }
 
 void loop() {
@@ -152,90 +133,6 @@ void sendData(uint8_t func, uint8_t leng){
   Serial.write(checkSum(dataBuffer, trueleng));
 
   clearBuffer();  
-}
-
-/*
- * 
- */
-bool chipPwd(){
-   
-   uint8_t dataBlock2[4] = {pass_ntag[0], pass_ntag[1], pass_ntag[2], pass_ntag[3]};
-    // пароль 4 байта, мы будем использовать первые три - мастер пароли и последний nfc-пароль
-   const uint8_t sizePageNtag = 4;
-   status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pagePwd, dataBlock2, sizePageNtag);
-   if (status != MFRC522::STATUS_OK) {
-     signalError(ERROR_CARD_WRITE);
-   }
-}
-
-/*
- * 
- */
-bool chipPack(){
-   uint8_t dataBlock2[4] = {0,0,0,0}; // первые два байта - это pack, будем использовать 0, 0
-   
-   const uint8_t sizePageNtag = 4;
-   status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pagePack, dataBlock2, sizePageNtag);
-   if (status != MFRC522::STATUS_OK) {
-     signalError(ERROR_CARD_WRITE);
-   }
-}
-
-/*
- * 
- */
-void chipAccess(){
-   uint8_t dataBlock2[4] = {0,0,0,0};
-   
-   const uint8_t sizePageNtag = 4;
-   status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pageAccess, dataBlock2, sizePageNtag);
-   if (status != MFRC522::STATUS_OK) {
-     signalError(ERROR_CARD_WRITE);
-   }
-}
-
-/*
- * Функция шифрования или снятия шифрования чипа с помощью пароля станции
- * True - зашифровать, False - снять пароль
- */
-void chipAuth(bool auth){
-
-  uint8_t auth_num = 0;
-  
-  if (auth == true){
-    auth_num = 0;
-    chipPack();
-    chipAccess();
-    chipPwd();
-  }
-
-  if (auth == false){
-    auth_num = 255;
-    if (!ntagAuth()){
-      beep(50, 10);
-    }
-  }
-    
-   uint8_t dataBlock2[4] = {0,0,0,auth_num};
-   
-   const uint8_t sizePageNtag = 4;
-   status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pageAuth, dataBlock2, sizePageNtag);
-   if (status != MFRC522::STATUS_OK) {
-     signalError(ERROR_CARD_WRITE);
-   }
-}
-
-bool ntagAuth (){
-  
-  uint8_t password[4]= {pass_ntag[0], pass_ntag[1], pass_ntag[2], pass_ntag[3]};
-  uint8_t pack[2] = {0,0};
-  
-  status = (MFRC522::StatusCode) mfrc522.PCD_NTAG216_AUTH(password, pack); 
-  
-  if (status != MFRC522::STATUS_OK) {
-    return false;
-  }
-  return true;
 }
 
 uint8_t dump[16];
@@ -357,12 +254,6 @@ void findFunc() {
     case 0x46:
       getVersion();
       break;
-    case 0x47:
-      writeMasterLog();
-      break;
-    case 0x48:
-      readLog();
-      break;
     case 0x4B:
       readCard();
       break;
@@ -371,18 +262,6 @@ void findFunc() {
       break;
     case 0x4E:
       writeMasterSleep();
-      break;
-    case 0x50:
-      initStateCard();
-      break;
-    case 0x51:
-      write_full_log();
-      break;
-    case 0x52:
-      write_clean_master();
-      break;
-    case 0x53:
-      ntag_pwd_master();
       break;
     case 0x58:
       signalError(0);
@@ -520,60 +399,6 @@ void writeMasterPass() {
 /*
  * 
  */
-void ntag_pwd_master() {
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init(); 
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  byte dataBlock[4] = {0,246,255, 0};
-  if(!ntagWrite(dataBlock, pageInit)) {
-    return;
-  }
-
-
-  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
-  if(!ntagWrite(dataBlock2, pagePass)) {
-    return;
-  }
-
-  pass_ntag[0] = dataBuffer[2];
-  pass_ntag[1] = dataBuffer[3];
-  pass_ntag[2] = dataBuffer[4];
-  pass_ntag[3] = dataBuffer[5];  
-  
-  eepromwrite(EEPROM_ADR_NTAG_PWD, dataBuffer[2]);
-  eepromwrite(EEPROM_ADR_NTAG_PWD+3, dataBuffer[3]);
-  eepromwrite(EEPROM_ADR_NTAG_PWD+6, dataBuffer[4]);
-  eepromwrite(EEPROM_ADR_NTAG_PWD+9, dataBuffer[5]);
-
-  if ((pass_ntag[0]==0) and (pass_ntag[1]==0) and (pass_ntag[2]==0) and (pass_ntag[3]==0)){
-    chip_protect = false;
-  }
-  else{
-    chip_protect = true;
-  }
-  
-  byte dataBlock3[] = {pass_ntag[0],pass_ntag[1],pass_ntag[2],pass_ntag[3]};
-  if(!ntagWrite(dataBlock3, pageInfo1)) {
-    return;
-  }
-
-  signalOK();
-
-  SPI.end();
-}
-
-/*
- * 
- */
 void writeInit() {
   SPI.begin();          // Init SPI bus
   mfrc522.PCD_Init(); 
@@ -624,10 +449,6 @@ void writeInit() {
   if(!ntagWrite(dataBlock4, pageInfo2)) {
     return;
   }
-
-  if (chip_protect == true){
-    chipAuth(true);  
-  }
   
   signalOK();
 
@@ -666,160 +487,6 @@ void writeInfo(){
 
   SPI.end();
 }
-
-/*
- * 
- */
-void writeMasterLog(){
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init(); 
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  byte Wbuff[] = {255,255,255,255};
-  
-  for (byte page=4; page < ntagValue; page++){
-    if (!ntagWrite(Wbuff, page)) {
-      return;
-    }
-  }
-
-  byte Wbuff2[] = {0,0,0,0};
-   
-  for (byte page=4; page < ntagValue; page++){
-    if (!ntagWrite(Wbuff2, page)) {
-      return;
-    }
-  }
-
-  byte dataBlock[4] = {0, 253, 255, 0};
-  if(!ntagWrite(dataBlock, pageInit)) {
-    return;
-  }
-
-  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
-  if(!ntagWrite(dataBlock2, pagePass)) {
-    return;
-  }
-
-  signalOK();
-
-  SPI.end();
-}
-
-/*
- * 
- */
-void write_full_log(){
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init(); 
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  byte Wbuff[] = {255,255,255,255};
-  
-  for (byte page=4; page < ntagValue; page++){
-    if (!ntagWrite(Wbuff, page)) {
-      return;
-    }
-  }
-
-  byte Wbuff2[] = {0,0,0,0};
-   
-  for (byte page=4; page < ntagValue; page++){
-    if (!ntagWrite(Wbuff2, page)) {
-      return;
-    }
-  }
-
-  byte dataBlock[4] = {0, 248, 255, 0};
-  if(!ntagWrite(dataBlock, pageInit)) {
-    return;
-  }
-
-  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
-  if(!ntagWrite(dataBlock2, pagePass)) {
-    return;
-  }
-
-  byte dataBlock3[4] = {dataBuffer[2],dataBuffer[3], 0, 0};
-  if(!ntagWrite(dataBlock3, pageInfo1)) {
-     return;
-  }
-
-  signalOK();
-
-  SPI.end();
-}
-
-/*
- * 
- */
-void readLog() {
-  function = 0x61;
-  clearBuffer();
-  
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init();
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  if(!ntagRead(pageInit)) {
-    return;
-  }
-
-  addData(0, function);
-  addData(dump[0], function);
-
-  for (uint8_t page = 5; page < ntagValue; page++) {
-    if (!ntagRead(page)) {
-      return;
-    }
-
-    for (uint8_t i = 0; i < 4; i++) {
-      for (uint8_t y = 0; y < 8; y++) {
-        uint8_t temp = dump[i];
-        temp = temp >> y;
-        if (temp%2 == 1) {
-        
-          uint16_t num = (page - 5)*32 + i*8 + y;
-          uint8_t first = (num&0xFF00)>>8;
-          uint8_t second = num&0x00FF; 
-          addData(first, function);
-          addData(second, function);
-        }
-      }
-    }
-  }
-
-  sendData(function, dataCount);
-  packetCount = 0;
-
-  SPI.end();
-}
-
-
 void readCard() {
   function = 0x63;
   clearBuffer();
@@ -834,10 +501,6 @@ void readCard() {
   // Select one of the cards
   if ( ! mfrc522.PICC_ReadCardSerial()) {
     return;
-  }
-
-  if (chip_protect == true){
-    chipAuth(false);  
   }
 
   if(!ntagRead(pageInit)){
@@ -954,69 +617,6 @@ void writeMasterSleep() {
   }
 
   byte dataBlock[4] = {0, 252, 255, 0};
-  if(!ntagWrite(dataBlock, pageInit)) {
-    return;
-  }
-
-  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
-  if(!ntagWrite(dataBlock2, pagePass)) {
-    return;
-  }
-
-  signalOK();
-
-  SPI.end();
-}
-
-/*
- * 
- */
-void initStateCard() {
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init(); 
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  byte dataBlock[4] = {0, 249, 255, 0};
-  if(!ntagWrite(dataBlock, pageInit)) {
-    return;
-  }
-
-  byte dataBlock2[] = {pass[0], pass[1], pass[2], 0};
-  if(!ntagWrite(dataBlock2, pagePass)) {
-    return;
-  }
-
-  signalOK();
-
-  SPI.end();
-}
-
-/*
- * 
- */
-void write_clean_master() {
-  
-  SPI.begin();      // Init SPI bus
-  mfrc522.PCD_Init(); 
-  mfrc522.PCD_SetAntennaGain(gain);    // Init MFRC522
-  // Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    return;
-  }
-
-  byte dataBlock[4] = {0, 247, 255, 0};
   if(!ntagWrite(dataBlock, pageInit)) {
     return;
   }

@@ -20,14 +20,12 @@
     #define HW_VERS 3
 #endif
 
-#define LED 4 // Светодиод
-#define BUZ 3 // пищалка
-#define RST_PIN 9 //Reset pin of MFRC522, LOW for sleep
-#define SS_PIN 10 //SS pin of RFID
-#define ADC_IN A0 //делитель напряжения
-#define ADC_EN A1 //делитель напряжения
-#define I2C_EEPROM_ADR 0x50 //defines the base address of the EEPROM
-#define I2C_EEPROM_VCC 6 // Питание внешней EEPROM памяти
+#define LED             4 // Светодиод
+#define BUZ             3 // пищалка
+#define RST_PIN         9 //Reset pin of MFRC522, LOW for sleep
+#define SS_PIN          10 //SS pin of RFID
+#define ADC_IN          A0 //делитель напряжения
+#define ADC_EN          A1 //делитель напряжения
 
 #if HW_VERS == 1
   #define VCC_C 5 // Питание часов  
@@ -41,10 +39,7 @@
 //Адреса в EEPROM памяти для энергонезависимого хранения данных
 const uint16_t EEPROM_ADR_STATION = 800;// Номер станции
 const uint16_t EEPROM_ADR_PWD = 850;//Пароли
-const uint16_t EEPROM_ADR_GAIN = 870;//Усиление антенны
-const uint16_t EEPROM_ADR_CAL_VOLT = 880;//Каллибровка вольтметра
 const uint16_t EEPROM_ADR_SLEEP = 900;//Статус сна
-const uint16_t EEPROM_ADR_PWD_NTAG = 950;//Пароль NTAG
 
 //Ключевые номера страниц в чипе
 const uint8_t PAGE_INFO = 4;
@@ -54,13 +49,8 @@ const uint8_t MAX_PAGE = 127;
 const uint8_t NTAG215_VALUE = 130;
 
 //Особые номера станций, наделенных необычной функциональностью
-const uint8_t START_STATION = 240; //старт
-const uint8_t FINISH_STATION = 245;//финиш
 const uint8_t CHECK_STATION = 248;//проверка
 const uint8_t CLEAR_STATION = 249; //очистка
-
-//максимальный номер чипа, который будет записываться в EEPROM память
-const uint16_t MAX_NUM_CHIP = 4000;
 
 //максиамальная дельта времени инициализации для корректной работы
 const uint32_t MAX_TIME_INIT = 2500000UL; 
@@ -69,22 +59,14 @@ const uint32_t MAX_TIME_INIT = 2500000UL;
 const uint32_t MAC_COUNT_LOOPS = 57600UL; 
 
 //Мастер-чипы
-const uint8_t PASS_NTAG_MASTER = 246;//Изменение пароля для авторизации на чипах
-const uint8_t CLEAN_EEPROM_MASTER = 247;//Очистка памяти
-const uint8_t FULL_DUMP_MASTER = 248;//Снятие отметок времени
-const uint8_t STATE_MASTER = 249;//Проверка напряжения
 const uint8_t TIME_MASTER = 250;//Изменение времени
 const uint8_t NUMBER_MASTER = 251;//Изменение номера станции
 const uint8_t SLEEP_MASTER = 252;//Ввод в сон
-const uint8_t DUMP_MASTER = 253;//Снятия факта отметок на станции
 const uint8_t PASS_SETTING_MASTER = 254;//Изменение пароля и настреок
 
 //переменные
-uint8_t gain = 0x06 << 4; //усиление антенны
-uint8_t volt_cal = 128; //каллибровочный коэффициент для вольтметра 
-boolean chip_protection = false;//использование пароля для записи чипов
+const uint8_t gain = 0x06 << 4; //усиление антенны
 uint8_t pass[3] = {0, 0, 0}; //пароль станции
-uint8_t pass_ntag[4] = {0, 0, 0, 0};// Пароль авторизациия для записи чипов
 uint8_t station = 0; //номер станции. По умолчнаию 0 - не записывает чипы
 
 boolean work = false; //включение рабочего режима, по умолчанию выключен
@@ -120,20 +102,7 @@ void setup () {
     beep(50, 3);
   }
 
-  //Загрузем вайр для работы со внешней EEPROM
-  Wire.begin();
-  
   set_sleep_mode (SLEEP_MODE_PWR_DOWN); //Включаем наиболее энергоэффективный режим работы
-
-  gain = eeprom_read(EEPROM_ADR_STATION); //Считываем усиление антенны из памяти
-  if ((gain==0) or (gain==255)){
-    gain = 0x06 << 4;
-  }
-
-  volt_cal = eeprom_read(EEPROM_ADR_CAL_VOLT); //Считываем усиление антенны из памяти
-  if ((gain==0) or (gain==255)){
-    volt_cal = 128;
-  }
 
   station = eeprom_read(EEPROM_ADR_STATION); //Считываем номер станции из памяти
   deepsleep = eeprom_read(EEPROM_ADR_SLEEP); //Считываем состояние сна из памяти
@@ -145,15 +114,6 @@ void setup () {
   //сброс пароля и настроек на 0 в случае чистой памяти
   if (pass[0] == 255) {
     pass[0] = pass[1] = pass[2] = 0;
-  }
-
-  //считываем пароль из памяти
-  for (uint8_t i = 0; i < 4; i++) {
-    pass_ntag[i] = eeprom_read(EEPROM_ADR_PWD_NTAG + i * 3);
-  }
-  //сброс пароля и настроек на 0 в случае чистой памяти
-  if (pass_ntag[0] == 255) {
-    pass_ntag[0] = pass_ntag[1] = pass_ntag[2] = 0;
   }
 
   delay(5000); //Оставляем 5 секунд, чтобы не иметь проблемм с загрузкой скетчей и слишком частыми перезагрузками станции при выходе её из строя
@@ -201,8 +161,8 @@ void loop (){
   //Если режим сна, то входим в сон на 24 секунды
   if (deepsleep) {
     for (uint8_t i = 0; i < 3; i++) {
-      sleep_8second();
-    }
+        sleep_8second();
+      }
   }
 
 } // end of loop
@@ -348,123 +308,6 @@ uint8_t eeprom_read(uint16_t adr) {
 } // end of eeprom_read
 
 /*
-   Запись ячейки соответствующей номеру чипа во внутреннюю память. Только факт отметки.
-*/
-void write_num_eeprom (uint16_t num) {
-  uint16_t byteAdr = num / 8;
-  uint16_t bitAdr = num % 8;
-  uint8_t eepromByte = EEPROM.read(byteAdr);
-  bitSet(eepromByte, bitAdr);
-  EEPROM.write(byteAdr, eepromByte);
-}
-
-/*
-   Очистка памяти
-*/
-void clean_eeprom () {
-
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, HIGH);
-  
-  //внутренняя память - адреса 0 - 500, где хранится факт отмекти на станции
-  for (uint16_t a = 0; a < 500; a++) {
-    if (a% 100 == 0){
-        beep(100,1);
-        wdt_reset();
-      }
-    EEPROM.write(a, 0);
-    delay(5);//запись длится до 5 мс
-  }
-  
-  #if HW_VERS == 3
-  //внешняя память адреса 0 - 16000, где хранится факт отмекти на станции
-    //включаем i2c eeprom
-    //включаем i2c eeprom
-    pinMode(VCC_C, OUTPUT);
-    digitalWrite(VCC_C, HIGH);
-    pinMode(I2C_EEPROM_VCC, OUTPUT);
-    digitalWrite(I2C_EEPROM_VCC, HIGH);
-    delay(1);
-  
-    //производит запись юникс-времени в ячейки начиная с номера чипа, умноженного на 4
-    for(uint16_t i = 0; i < 16000; i++){
-      if (i% 100 == 0){
-        wdt_reset();
-      }
-      if (i% 1000 == 0){
-        beep(100,1);
-        wdt_reset();
-      }
-      write_i2c_EEPROM(I2C_EEPROM_ADR, i, 0);
-    }
-  
-    //выключаем i2c eeprom
-    digitalWrite(VCC_C, LOW);
-    digitalWrite(I2C_EEPROM_VCC, LOW);
-  #endif
-  
-  beep(200,2);
-}
-
-/*
-* Запись отметки времени в i2c EEPROM
-*/
-void write_num_time_i2c(uint16_t num, uint32_t utime){
-
-  //Разбиваем юникс-время на байты
-  uint8_t to_write[4] = {0, 0, 0, 0};
-  to_write[0] = (utime & 0xFF000000) >> 24;
-  to_write[1] = (utime & 0x00FF0000) >> 16;
-  to_write[2] = (utime & 0x0000FF00) >> 8;
-  to_write[3] = (utime & 0x000000FF);
-  
-  //включаем i2c eeprom
-  pinMode(VCC_C, OUTPUT);
-  digitalWrite(VCC_C, HIGH);
-  pinMode(I2C_EEPROM_VCC, OUTPUT);
-  digitalWrite(I2C_EEPROM_VCC, HIGH);
-  delay(1);
-
-  //производит запись юникс-времени в ячейки начиная с номера чипа, умноженного на 4
-  for(uint8_t i = 0; i < 4; i++){
-     write_i2c_EEPROM(I2C_EEPROM_ADR, num*4 + i, to_write[i]);
-  }
-
-  //выключаем i2c eeprom
-  digitalWrite(VCC_C, LOW);
-  digitalWrite(I2C_EEPROM_VCC, LOW);
-
-}//end of write_num_time_i2c
-
-/*
-*функция записи в i2c eeprom
-*/
-void write_i2c_EEPROM(int deviceaddress, unsigned int eeaddress, byte data ) {
-    Wire.beginTransmission(deviceaddress);
-    Wire.write((int)(eeaddress >> 8)); //writes the MSB
-    Wire.write((int)(eeaddress & 0xFF)); //writes the LSB
-    Wire.write(data);
-    Wire.endTransmission();
-    delay(5);
-}
-
-/*
-*функция чтения из i2c eeprom
-*/
-byte read_i2c_EEPROM(int deviceaddress, unsigned int eeaddress ) {
-    byte rdata = 0xFF;
-    Wire.beginTransmission(deviceaddress);
-    Wire.write((int)(eeaddress >> 8)); //writes the MSB
-    Wire.write((int)(eeaddress & 0xFF)); //writes the LSB
-    Wire.endTransmission();
-    Wire.requestFrom(deviceaddress,1);
-    if (Wire.available())
-    rdata = Wire.read();
-    delay(5);
-    return rdata;
-}
-
-/*
    Выдача сигнала. Принимает продолжительность сигнала и число сигналов подряд
    В ходе работы сбрасывает вотчдог, чтобы не произошла перезагрузка
 */
@@ -507,82 +350,9 @@ void beep_mark() {
 
 } //end of beep_mark
 
-/*
-   Измерение напряжения. Включает диод на 5 секунд. Затем происходит измерение.
-   Выдает сигналы, пропорциональные напряжению - от 1 до 10 для 3.5 до 4 вольт
-*/
-void voltage() {
-  
-  //Используем внутренний источник опорного напряжения
-  analogReference(INTERNAL);
-
-  //включаем делитель напряжения
-  pinMode(ADC_EN, OUTPUT);
-  digitalWrite(ADC_EN, LOW);
-  pinMode(ADC_IN, INPUT);
-
-  ADCSRA |= bit(ADEN);
-  
-  //Включаем диод для увелечения тока на 5 секунд
-  digitalWrite(LED, HIGH);
-  for (uint8_t ig = 0; ig < 10; ig++) {
-    delay(500);
-    wdt_reset();
-  }
-
-  // Drop first measure, it's wrong
-  analogRead(A0);
-
-  //накапливаем данные
-  uint32_t value = 0;
-  for (uint8_t i = 0; i < 10; ++i) {
-    value += analogRead(ADC_IN);
-    delay(1);
-  }
-  value /= 10;
-
-  //выключаем диод и делитель напряжения
-  digitalWrite(LED, LOW);
-  pinMode(ADC_EN, INPUT);
-
-  //рассчёт напряжения из параметров делителя напряжения
-  const uint32_t R_HIGH = 270000; // Ohm
-  const uint32_t R_LOW = 68000; // Ohm
-  uint32_t volt = value * 1100 / 1023 * (R_HIGH + R_LOW) / R_LOW * 1000 / (1128 - volt_cal);
-
-  //сигналы в зависимости от напряжения
-  if (volt > 4000) beep(300, 10);
-  else if (volt > 3950) beep(300, 9);
-  else if (volt > 3900) beep(300, 8);
-  else if (volt > 3850) beep(300, 7);
-  else if (volt > 3800) beep(300, 6);
-  else if (volt > 3750) beep(300, 5);
-  else if (volt > 3700) beep(300, 4);
-  else if (volt > 3650) beep(300, 3);
-  else if (volt > 3600) beep(300, 2);
-  else beep(300, 1);
-
-}//end of voltage
-
 //Массив для хранения данных считывания чипов
 uint8_t dump[16];
 
-/*
-   Авторизцаия на чипах
-*/
-bool ntagAuth () {
-
-  //используется пароль станции и отдельный пароль nfc
-  uint8_t passWord[4] = {pass_ntag[0], pass_ntag[1], pass_ntag[2], pass_ntag[3]};
-  uint8_t pACK[2] = {0, 0};
-
-  status = (MFRC522::StatusCode) mfrc522.PCD_NTAG216_AUTH(passWord, pACK);
-
-  if (status != MFRC522::STATUS_OK) {
-    return false;
-  }
-  return true;
-}
 
 /*
    Запись страницы в чип с проверкой результата
@@ -719,47 +489,11 @@ void rfid() {
       sleep_regime_on();
       break;
       
-      case DUMP_MASTER:
-      dump_marks();
-      break;
-      
       case PASS_SETTING_MASTER:
       password_update();
       break;
-      
-      case STATE_MASTER:
-        #if HW_VERS == 3
-          voltage();
-        #else
-          beep(50, 3);
-        #endif
-      break;
-      
-      case FULL_DUMP_MASTER:
-        #if HW_VERS == 3
-          dump_time();
-        #else
-          beep(50, 3);
-        #endif
-      break;
-      
-      case CLEAN_EEPROM_MASTER:
-      clean_eeprom();
-      break;
-
-      case PASS_NTAG_MASTER:
-      ntag_pwd_update();
-      break;
     }
     return;
-  }
-
-  //Если пароль нули или 255, то не используется авторизации для записи, иначе используется. 
-  if ((pass_ntag[0] == 0) and (pass_ntag[1] == 0) and (pass_ntag[2] == 0) and (pass_ntag[3] == 0)){
-    chip_protection = false;
-  }
-  else {
-    chip_protection = true;
   }
 
   //Проверяем является ли станция станцией очистки
@@ -798,14 +532,6 @@ void rfid() {
   //Записываем отметку
   if (!write_mark(new_page)) {
     return;
-  }
-
-  //записывааем номер чипа во внутреннюю память и если есть внешняя память, записываем туда время
-  if ((chip_number < MAX_NUM_CHIP) && (chip_number > 0)) {
-    write_num_eeprom (chip_number);
-    #if HW_VERS == 3
-      write_num_time_i2c (chip_number, t.unixtime);
-    #endif
   }
 
   //переходим в рабочий режим, обнуляем число циклов без взаимодействия с чипами
@@ -896,98 +622,6 @@ void sleep_regime_on() {
 }
 
 /*
-   Функция записи дамп-чипа. Станция считывает все данные по чипам из внутренней памяти
-   и записывает их последовательно на дамп-чип. После чего один раз пикает и выходит.
-*/
-void dump_marks() {
-
-  //переменные для работы процедуры
-  uint8_t data_eeprom[4];
-  uint16_t eeprom_adr = 0;
-  
-  uint8_t data_dump[4] = {station, 0, 0, 0};
-  
-  //во время работы процедуры горит светодиод для сигнализации успешности процесса записи
-  pinMode (LED, OUTPUT);
-  digitalWrite(LED, HIGH);
-  
-  //записываем в четвертую страницу номер станции
-  if (!ntag_write(data_dump, 4)) {
-    digitalWrite(LED, LOW);
-    return;
-  }
-
-  //в остальные копируем содержаимое eeprom памяти до полной записи чипа
-  for (uint8_t page = 5; page < 130; page++) {
-    wdt_reset();
-    for (uint8_t m = 0; m < 4; m++) {
-      data_eeprom[m] = EEPROM.read(eeprom_adr);
-      eeprom_adr++;
-    }
-
-    if (!ntag_write(data_eeprom, page)) {
-      digitalWrite(LED, LOW);
-      return;
-    }
-
-  }
-
-  beep(200, 2);
-  return;
-
-}
-
-void dump_time() {
-
-  //переменные для работы процедуры
-  uint8_t data_ext_eeprom[4];
-  uint16_t eeprom_ext_adr = (dump[9] + dump[8]*256) * 4;
-  uint8_t data_dump[4] = {station, dump[8], dump[9], 0};
-
-  //включаем внешнюю память
-  pinMode(VCC_C, OUTPUT);
-  digitalWrite(VCC_C, HIGH);
-  pinMode(I2C_EEPROM_VCC, OUTPUT);
-  digitalWrite(I2C_EEPROM_VCC, HIGH);
-  pinMode (LED, OUTPUT);
-  digitalWrite(LED, HIGH);
-  delay(1);
-  
-  //записываем в 4-ую страницу номер станции и номер чипа отсчета
-  if (!ntag_write(data_dump, 4)) {
-    digitalWrite(LED, LOW);
-    digitalWrite(VCC_C, LOW);
-    digitalWrite(I2C_EEPROM_VCC, LOW);
-    return;
-  }
-
-  //копируем данные из памяти по странично
-  for (uint8_t page = 5; page < 130; page++) {
-    wdt_reset();
-    for (uint8_t m = 0; m < 4; m++) {
-      data_ext_eeprom[m] = read_i2c_EEPROM(I2C_EEPROM_ADR, eeprom_ext_adr);
-      eeprom_ext_adr++;
-    }
-
-    if (!ntag_write(data_ext_eeprom, page)) {
-      digitalWrite(LED, LOW);
-      digitalWrite(VCC_C, LOW);
-      digitalWrite(I2C_EEPROM_VCC, LOW);
-      return;
-    }
-
-  }
-  
-  //выключаем память, сигналим и перезагружаемся
-  digitalWrite(VCC_C, LOW);
-  digitalWrite(I2C_EEPROM_VCC, LOW);
-  
-  beep(200, 2);
-  return;
-
-}
-
-/*
    Функция записи отметки в чип.
    Записывает номер и поседние 3 байта юникстайм в чип. Если удалось, пикает и выдает true
 */
@@ -1006,14 +640,6 @@ bool write_mark(int new_page) {
   to_write[3] = (code & 0x000000FF);
 
   uint8_t data_block2[4] = {to_write[0], to_write[1], to_write[2], to_write[3]};
-
-  //если включена авторизцаия на запись чипов - выполняем её с помощью пароля. В случае неуспеха - сигналим
-  if (chip_protection == true) {
-    if (ntagAuth() == false) {
-      beep(50, 3);
-      return false;
-    }
-  }
   
   //Если всё хорошо, сигнал отметки, если плохо - то плохо
   if (ntag_write(data_block2, new_page)) {
@@ -1037,22 +663,6 @@ void password_update() {
   for (uint8_t i = 0; i < 3; i++) {
     pass[i] = dump[i + 8];
     eeprom_write((EEPROM_ADR_PWD + i * 3), pass[i]);
-  }
-  
-  beep(200, 2);
-  reset_function(); //reboot
-
-}
-
-/*
-   Функция обработки мастер-чипа смены пароля авторизации ntag. 
-*/
-void ntag_pwd_update() {
-
-  //считываем пароль станции
-  for (uint8_t i = 0; i < 4; i++) {
-    pass_ntag[i] = dump[i + 8];
-    eeprom_write((EEPROM_ADR_PWD_NTAG + i * 3), pass_ntag[i]);
   }
   
   beep(200, 2);
@@ -1148,13 +758,6 @@ void clearChip() {
   for (byte page = FIRST_PAGE; page < NTAG215_VALUE; page++) {
     wdt_reset();
 
-    //если включена авторизцаия - выполняем её
-    if (chip_protection == true) {
-      if (ntagAuth() == false) {
-        beep(50, 3);
-      }
-    }
-
     if (!ntag_write(wbuff, page)) {
       return;
     }
@@ -1165,12 +768,6 @@ void clearChip() {
 
   for (byte page = (NTAG215_VALUE - 1); page > (FIRST_PAGE - 1); page--) {
     wdt_reset();
-
-    if (chip_protection == true) {
-      if (ntagAuth() == false) {
-        beep(50, 3);
-      }
-    }
     
     if (!ntag_write(wbuff2, page)) {
       return;

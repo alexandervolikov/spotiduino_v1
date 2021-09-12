@@ -474,19 +474,6 @@
            <string>Check St</string>
           </property>
          </widget>
-         <widget class="QPushButton" name="LogCard">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>230</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Dump Card</string>
-          </property>
-         </widget>
          <widget class="QPushButton" name="SetTime">
           <property name="geometry">
            <rect>
@@ -498,24 +485,6 @@
           </property>
           <property name="text">
            <string>Set Time</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="ReadLog">
-          <property name="geometry">
-           <rect>
-            <x>110</x>
-            <y>230</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Read Dump</string>
           </property>
          </widget>
          <widget class="Line" name="line_2">
@@ -557,78 +526,11 @@
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
-         <widget class="Line" name="line_5">
-          <property name="geometry">
-           <rect>
-            <x>-3</x>
-            <y>259</y>
-            <width>211</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="FullLogCard">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>320</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Full Dump</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="ReadFullLog">
-          <property name="geometry">
-           <rect>
-            <x>110</x>
-            <y>320</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Read Full</string>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="FullLogLine">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>280</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-         </widget>
          <widget class="QCheckBox" name="AutoIncriment_st">
           <property name="geometry">
            <rect>
             <x>120</x>
             <y>30</y>
-            <width>81</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Auto++</string>
-          </property>
-         </widget>
-         <widget class="QCheckBox" name="AutoIncriment_log">
-          <property name="geometry">
-           <rect>
-            <x>120</x>
-            <y>280</y>
             <width>81</width>
             <height>31</height>
            </rect>
@@ -793,98 +695,6 @@
            <string>Sleep Card</string>
           </property>
          </widget>
-         <widget class="QPushButton" name="statusCard">
-          <property name="geometry">
-           <rect>
-            <x>110</x>
-            <y>10</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Status Card</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="cleanCard">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>50</y>
-            <width>91</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Clean Card</string>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="ntagPass1">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>130</y>
-            <width>41</width>
-            <height>21</height>
-           </rect>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_9">
-          <property name="geometry">
-           <rect>
-            <x>50</x>
-            <y>90</y>
-            <width>131</width>
-            <height>41</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Ntag password</string>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="ntagPass2">
-          <property name="geometry">
-           <rect>
-            <x>60</x>
-            <y>130</y>
-            <width>41</width>
-            <height>21</height>
-           </rect>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="ntagPass3">
-          <property name="geometry">
-           <rect>
-            <x>110</x>
-            <y>130</y>
-            <width>41</width>
-            <height>21</height>
-           </rect>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="ntagPass4">
-          <property name="geometry">
-           <rect>
-            <x>160</x>
-            <y>130</y>
-            <width>41</width>
-            <height>21</height>
-           </rect>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="NtagPassCard">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>160</y>
-            <width>191</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Ntag Pass Card</string>
-          </property>
-         </widget>
         </widget>
        </widget>
       </item>
@@ -934,8 +744,6 @@
   <tabstop>SetFinish</tabstop>
   <tabstop>ClearSt</tabstop>
   <tabstop>CheckSt</tabstop>
-  <tabstop>LogCard</tabstop>
-  <tabstop>ReadLog</tabstop>
   <tabstop>PassCard</tabstop>
   <tabstop>LoadSet</tabstop>
   <tabstop>SaveSet</tabstop>

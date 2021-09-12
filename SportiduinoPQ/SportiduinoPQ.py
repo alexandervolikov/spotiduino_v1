@@ -32,10 +32,6 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.new_pass1.setText('0')
         self.new_pass2.setText('0')
         self.new_pass3.setText('0')
-        self.ntagPass1.setText('0')
-        self.ntagPass2.setText('0')
-        self.ntagPass3.setText('0')
-        self.ntagPass4.setText('0')
         self.printerName.setText(QPrinter().printerName())
         
         self.initTime = datetime.now()
@@ -51,14 +47,7 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.SetFinish.clicked.connect(self.SetFinish_clicked)
         self.CheckSt.clicked.connect(self.CheckSt_clicked)
         self.ClearSt.clicked.connect(self.ClearSt_clicked)
-        self.LogCard.clicked.connect(self.LogCard_clicked)
-        self.ReadLog.clicked.connect(self.ReadLog_clicked)
-        self.FullLogCard.clicked.connect(self.FullLogCard_clicked)
-        self.ReadFullLog.clicked.connect(self.ReadFullLog_clicked)
         self.SleepCard.clicked.connect(self.SleepCard_clicked)
-        self.statusCard.clicked.connect(self.statusCard_clicked)
-        self.cleanCard.clicked.connect(self.cleanCard_clicked)
-        self.NtagPassCard.clicked.connect(self.NtagPassCard_clicked)
         self.PassCard.clicked.connect(self.PassCard_clicked)
         self.SaveSet.clicked.connect(self.SaveSet_clicked)
         self.LoadSet.clicked.connect(self.LoadSet_clicked)
@@ -237,89 +226,6 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         except:
             self.addText('\nError')
 
-    def LogCard_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-        
-        try:
-            self.sportiduino.init_backupreader()
-            self.addText ('\nset dump card')
-        except:
-            self.addText('\nError')
-                
-    def ReadLog_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-
-        readBuffer = ''
-        try:
-            data = self.sportiduino.read_backup()
-            self.sportiduino.beep_ok()
-            try:
-                readBuffer += '\nread dump from CP: {}'.format(data['cp'])
-            except:
-                pass
-            try:
-                cards = data['cards']
-                readBuffer += '\ntotal punches: {}\n'.format(len(cards))
-                for i in range(0,len(cards),1):
-                    readBuffer += '{},'.format(cards[i])
-            except:
-                pass
-
-            self.dumpData.append(data)
-            dumpFile = open(os.path.join('data','dumpData{:%Y%m%d%H%M%S}.json'.format(self.initTime)),'w')
-            json.dump(self.dumpData, dumpFile)
-            dumpFile.close()
-            self.addText(readBuffer)
-        except:
-            self.addText('\nError')
-
-    def FullLogCard_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-        
-        text = self.FullLogLine.text()
-        if(text.isdigit()):
-            self.LogNum = text
-        else:
-            self.LogNum = '0'
-            
-        num = int(self.LogNum)
-        if (num > 0 and num < 4000):
-            
-            try:
-                self.sportiduino.init_full_log_card(num)
-                self.addText ('\nset Full log card from {} chip'.format(num))
-                if (self.AutoIncriment_log.checkState() != 0):
-                    self.AutoIn_log = True
-                    self.LogNum = str(num + 125)
-                    self.FullLogLine.setText(self.LogNum)
-            except:
-                self.addText('\nError')
-              
-        else:
-            self.addText("\nnot correct value")
-
-    def ReadFullLog_clicked(self):
-
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-
-        try:
-            data = self.sportiduino.read_card_raw()
-            self.sportiduino.beep_ok()
-            
-            self.read_full_log(data)
-            
-        except:
-            self.sportiduino.beep_error()
-            self.addText('\nError')
-
     def SleepCard_clicked(self):
         if (self.connected == False):
             self.addText('\nmaster station is not connected')
@@ -328,28 +234,6 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         try:
             self.sportiduino.init_sleepcard()
             self.addText ('\nset sleep card')
-        except:
-            self.addText('\nError')
-
-    def statusCard_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-        
-        try:
-            self.sportiduino.init_state_card()
-            self.addText ('\nset status card')
-        except:
-            self.addText('\nError')
-
-    def cleanCard_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-        
-        try:
-            self.sportiduino.init_clean_card()
-            self.addText ('\nset clean card')
         except:
             self.addText('\nError')
 
@@ -425,64 +309,10 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
             except:
                 self.addText('\nError')
 
-    def NtagPassCard_clicked(self):
-        if (self.connected == False):
-            self.addText('\nmaster station is not connected')
-            return
-        
-        pwd = [0, 0, 0, 0]
-
-        if (self.ntagPass1.text().isdigit()):
-            pwd[0] = int(self.ntagPass1.text())
-            if (pwd[0] <0 or pwd[0] > 255):
-                self.addText('\nnot correct old pass value')
-                pwd[0] = -1
-        else:
-            self.addText('\nnot correct old pass value')
-            pwd[0] = -1
-
-        if (self.ntagPass2.text().isdigit()):
-            pwd[1] = int(self.ntagPass2.text())
-            if (pwd[1] <0 or pwd[1] > 255):
-                self.addText('\nnot correct old pass value')
-                pwd[1] = -1
-        else:
-            self.addText('\nnot correct old pass value')
-            pwd[1] = -1
-        
-        if (self.ntagPass3.text().isdigit()):
-            pwd[2] = int(self.ntagPass3.text())
-            if (pwd[2] <0 or pwd[2] > 255):
-                self.addText('\nnot correct old pass value')
-                pwd[2] = -1
-        else:
-            self.addText('\nnot correct old pass value')
-            pwd[2] = -1
-        
-        if (self.ntagPass4.text().isdigit()):
-            pwd[3] = int(self.ntagPass4.text())
-            if (pwd[3] <0 or pwd[3] > 255):
-                self.addText('\nnot correct old pass value')
-                pwd[3] = -1
-        else:
-            self.addText('\nnot correct old pass value')
-            pwd[3] = -1
-
-        if -1 not in pwd:
-            try:
-                self.sportiduino.init_ntag_passwd_card(pwd[0], pwd[1], pwd[2], pwd[3])
-                self.addText ('\nset password - settings card')
-            except:
-                self.addText('\nError')
-            
     def LoadSet_clicked(self):
         
         try:
             sets = open(os.path.join('data','settings.txt'))
-            self.ntagPass1.setText(sets.readline().rstrip())
-            self.ntagPass2.setText(sets.readline().rstrip())
-            self.ntagPass3.setText(sets.readline().rstrip())
-            self.ntagPass4.setText(sets.readline().rstrip())
             self.new_pass1.setText(sets.readline().rstrip())
             self.new_pass2.setText(sets.readline().rstrip())
             self.new_pass3.setText(sets.readline().rstrip())
@@ -496,10 +326,6 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def SaveSet_clicked(self):
                 
         sets = open(os.path.join('data','settings.txt'),'w')
-        sets.write(self.ntagPass1.text()+'\n')
-        sets.write(self.ntagPass2.text()+'\n')
-        sets.write(self.ntagPass3.text()+'\n')
-        sets.write(self.ntagPass4.text()+'\n')
         sets.write(self.new_pass1.text()+'\n')
         sets.write(self.new_pass2.text()+'\n')
         sets.write(self.new_pass3.text()+'\n')
@@ -582,30 +408,6 @@ class App(QtWidgets.QMainWindow, design.Ui_MainWindow):
         json.dump(self.readData, dataFile)
         dataFile.close()       
     
-    def read_full_log(self,data):
-        
-        clear_data = []
-        
-        station = int(data[4].hex()[0:2], 16)
-        start_chip = int(data[4].hex()[2:6], 16)
-        
-        readBuffer = f'Station {station}\n'
-
-        for i in range(5, 130, 1):
-            time = int(data[i].hex(), 16)
-            if time!= 0 and time!=4294967295:
-                clear_data.append([start_chip+i-5, time])
-                value = datetime.fromtimestamp(time)
-                readBuffer += '\n{} - {:%Y-%m-%d %H:%M:%S}'.format(start_chip+i-5,value)
-        
-        self.full_dump_data.append([{'station':station, "data":clear_data}])
-        
-        dumpFullFile = open(os.path.join('data','dumpFullData{:%Y%m%d%H%M%S}.json'.format(self.initTime)),'w')
-        json.dump(self.full_dump_data, dumpFullFile)
-        dumpFullFile.close()
-        
-        self.addText(readBuffer)
-
     def read_raw(self,data):
         
         readBuffer = 'Raw data\n'
